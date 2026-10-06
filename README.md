@@ -1,6 +1,6 @@
-<video src="https://github.com/capucine-masson/MyMusee/raw/main/apercu/POC.mp4" width="875" controls muted></video>
+<img src="apercu/POC.gif" width="875" alt="Demo of Musée IA">
 
-<sub>If the video does not load, open <a href="apercu/POC.mp4">apercu/POC.mp4</a>.</sub>
+<sub>Full-quality video with sound: <a href="apercu/POC.mp4">apercu/POC.mp4</a>.</sub>
 
 # Musée IA - "Tell me what you see in this painting"
 
