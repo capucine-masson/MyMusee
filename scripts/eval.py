@@ -20,12 +20,12 @@ Option --query-mode meta : requête construite sans appel vision à partir du ti
 Usage
   python -m scripts.eval                        # embeddings (corpus entier) + rerank sur ~60 œuvres
   python -m scripts.eval --sample 100
+  python -m scripts.eval --seeds 0,1,2          # 3 échantillons différents : moyenne ± écart-type
   python -m scripts.eval --no-rerank            # embeddings seuls, zéro appel API
   python -m scripts.eval --query-mode meta
 """
 import argparse
 import json
-import math
 import random
 import sys
 import time
@@ -127,9 +127,23 @@ def mean(xs: list[float]) -> float:
     return sum(xs) / len(xs) if xs else float("nan")
 
 
+def std(xs: list[float]) -> float:
+    """Écart-type de l'échantillon ; 0 s'il n'y a qu'une valeur."""
+    if len(xs) < 2:
+        return 0.0
+    m = mean(xs)
+    return (sum((x - m) ** 2 for x in xs) / (len(xs) - 1)) ** 0.5
+
+
+def fmt(xs: list[float]) -> str:
+    return f"{mean(xs):.3f}" if len(xs) < 2 else f"{mean(xs):.3f} ± {std(xs):.3f}"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sample", type=int, default=60, help="taille de l'échantillon pour le rerank")
+    ap.add_argument("--seeds", default="0",
+                    help="graines des échantillons, séparées par des virgules (une exécution du rerank par graine)")
     ap.add_argument("--no-rerank", action="store_true")
     ap.add_argument("--query-mode", choices=["vision", "meta"], default="vision")
     ap.add_argument("--pause", type=float, default=0.0, help="pause (s) entre deux requêtes rerank")
@@ -160,57 +174,70 @@ def main() -> None:
             per_mov[metas[i]["movement"]]["emb" if key == "all" else "emb_x"].append(p)
     result["embeddings_full"] = {"precision": mean(emb["all"]), "precision_cross_artist": mean(emb["cross"])}
 
+    # chaque ligne : (méthode, valeurs « même artiste inclus », valeurs « hors même artiste », n) ;
+    # une valeur par exécution du rerank (une par graine), une seule pour les lignes sans échantillon
     rows = [
-        ("Aléatoire", baseline, baseline, n),
-        ("Embeddings seuls (corpus entier)", mean(emb["all"]), mean(emb["cross"]), n),
+        ("Aléatoire", [baseline], [baseline], n),
+        ("Embeddings seuls (corpus entier)", [mean(emb["all"])], [mean(emb["cross"])], n),
     ]
 
-    # 2) rerank sur un échantillon
+    # 2) rerank sur un ou plusieurs échantillons
     if not args.no_rerank:
-        sample = stratified_sample(metas, args.sample)
-        print(f"Rerank : {len(sample)} œuvres, requête = {args.query_mode}, "
-              f"{config.MODEL_RERANK} (variantes aveugle / avec mouvement × même artiste inclus / exclu)\n")
+        seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
         cache = load_cache()
-        acc = defaultdict(list)
+        runs: list[dict] = []
         t0 = time.time()
         try:
             with build_corpus.http_client() as http:
-                for step, i in enumerate(sample, 1):
-                    m = metas[i]
-                    q = vision_description(m, cache, http) if args.query_mode == "vision" else meta_query(m)
-                    if not q:
-                        continue
-                    for tag, excl in (("", False), ("_x", True)):
-                        cand_idx = ranking(i, metas, mat, excl)[:CANDIDATES]
-                        cands = [metas[j] for j in cand_idx]
-                        acc["emb" + tag].append(precision(i, cand_idx[:K], metas))
-                        for name, lab in (("rr_blind", False), ("rr_lab", True)):
-                            order = rerank_top(q, cands, lab)
-                            p = precision(i, [cand_idx[o] for o in order], metas)
-                            acc[name + tag].append(p)
-                            if tag == "":
-                                per_mov[m["movement"]][name].append(p)
-                            if args.pause:
-                                time.sleep(args.pause)
-                    if step % 10 == 0 or step == len(sample):
-                        print(f"  {step}/{len(sample)}  ({time.time() - t0:.0f} s)", flush=True)
+                for seed in seeds:
+                    sample = stratified_sample(metas, args.sample, seed)
+                    print(f"Rerank (graine {seed}) : {len(sample)} œuvres, requête = {args.query_mode}, "
+                          f"{config.MODEL_RERANK} (variantes aveugle / avec mouvement × même artiste inclus / exclu)\n")
+                    acc = defaultdict(list)
+                    runs.append(acc)
+                    for step, i in enumerate(sample, 1):
+                        m = metas[i]
+                        q = vision_description(m, cache, http) if args.query_mode == "vision" else meta_query(m)
+                        if not q:
+                            continue
+                        for tag, excl in (("", False), ("_x", True)):
+                            cand_idx = ranking(i, metas, mat, excl)[:CANDIDATES]
+                            cands = [metas[j] for j in cand_idx]
+                            acc["emb" + tag].append(precision(i, cand_idx[:K], metas))
+                            for name, lab in (("rr_blind", False), ("rr_lab", True)):
+                                order = rerank_top(q, cands, lab)
+                                p = precision(i, [cand_idx[o] for o in order], metas)
+                                acc[name + tag].append(p)
+                                if tag == "":
+                                    per_mov[m["movement"]][name].append(p)
+                                if args.pause:
+                                    time.sleep(args.pause)
+                        if step % 10 == 0 or step == len(sample):
+                            print(f"  {step}/{len(sample)}  ({time.time() - t0:.0f} s)", flush=True)
         except AppError as e:
             print(f"\nArrêt anticipé : {e.message}\nRésultats partiels ci-dessous (relancez : le cache évite de refaire les appels vision).")
 
-        k = len(acc["emb"])
-        if k:
+        runs = [a for a in runs if a["emb"]]  # une graine interrompue avant la 1re œuvre est ignorée
+        if runs:
+            k = round(mean([len(a["emb"]) for a in runs]))
+            per_run = lambda key: [mean(a[key]) for a in runs]  # noqa: E731 — une moyenne par exécution
+            # « embeddings seuls » est recalculé sur LES MÊMES œuvres que le rerank : seule comparaison valable
             rows += [
-                (f"Embeddings seuls (échantillon de {k})", mean(acc["emb"]), mean(acc["emb_x"]), k),
-                ("Embeddings + rerank, aveugle (sans mouvement)", mean(acc["rr_blind"]), mean(acc["rr_blind_x"]), k),
-                ("Embeddings + rerank, avec mouvement (application)", mean(acc["rr_lab"]), mean(acc["rr_lab_x"]), k),
+                (f"Embeddings seuls, mêmes {k} œuvres que le rerank", per_run("emb"), per_run("emb_x"), k),
+                ("Embeddings + rerank, aveugle (sans mouvement)", per_run("rr_blind"), per_run("rr_blind_x"), k),
+                ("Embeddings + rerank, avec mouvement (circulaire, voir README)", per_run("rr_lab"), per_run("rr_lab_x"), k),
             ]
-            result["rerank_sample"] = {name: mean(v) for name, v in acc.items()} | {"n": k}
+            result["rerank_runs"] = [{"seed": s, "n": len(a["emb"]), **{name: mean(v) for name, v in a.items()}}
+                                     for s, a in zip(seeds, runs)]
+            result["rerank_sample"] = {name: mean(per_run(name)) for name in runs[0]} | {"n": k, "runs": len(runs)}
 
     w = max(len(r[0]) for r in rows)
-    print("\n" + "Méthode".ljust(w) + f" | precision@{K} | hors même artiste |   n")
-    print("-" * w + "-+-------------+------------------+-----")
+    print("\n" + "Méthode".ljust(w) + f" | precision@{K}   | hors même artiste |   n")
+    print("-" * w + "-+---------------+-------------------+-----")
     for name, a, b, nn in rows:
-        print(f"{name.ljust(w)} | {a:11.3f} | {b:16.3f} | {nn:>4}")
+        print(f"{name.ljust(w)} | {fmt(a):13} | {fmt(b):17} | {nn:>4}")
+    if "rerank_runs" in result:
+        print(f"\n{len(result['rerank_runs'])} exécution(s) du rerank (graines {args.seeds}) ; ± = écart-type entre exécutions.")
 
     print("\nPar mouvement (embeddings seuls, corpus entier · hors même artiste)")
     for mov, d in sorted(per_mov.items(), key=lambda kv: -mean(kv[1]["emb_x"])):
@@ -219,8 +246,12 @@ def main() -> None:
             extra = f"   rerank(sample n={len(d['rr_lab'])}): aveugle {mean(d['rr_blind']):.2f} · avec mouvement {mean(d['rr_lab']):.2f}"
         print(f"  {mov:<20} n={counts[mov]:>3}  emb {mean(d['emb']):.2f} · hors artiste {mean(d['emb_x']):.2f}{extra}")
 
-    result["table"] = [{"method": r[0], "precision": r[1], "precision_cross_artist": r[2], "n": r[3]} for r in rows]
+    result["table"] = [{"method": r[0], "precision": mean(r[1]), "precision_std": std(r[1]),
+                        "precision_cross_artist": mean(r[2]), "precision_cross_artist_std": std(r[2]), "n": r[3]}
+                       for r in rows]
     result["per_movement"] = {m: {k: mean(v) for k, v in d.items() if v} for m, d in per_mov.items()}
+    if args.no_rerank:  # un rapport sans rerank écraserait les résultats complets
+        return
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nRésultats enregistrés : {RESULTS_PATH}")

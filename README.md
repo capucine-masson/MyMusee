@@ -1,146 +1,148 @@
-# Musée IA - « Dis-moi ce que tu vois dans ce tableau »
+<video src="https://github.com/capucine-masson/MyMusee/raw/main/apercu/POC.mp4" width="875" controls muted></video>
 
-Envoyez la photo d'un tableau : un modèle vision de Cohere en explique le mouvement, la technique et le contexte, puis
-l'application propose des œuvres proches d'un petit corpus du domaine public (embeddings, puis rerank) et justifie
-chaque rapprochement par des **citations** limitées aux métadonnées du corpus.
+<sub>If the video does not load, open <a href="apercu/POC.mp4">apercu/POC.mp4</a>.</sub>
 
-![Page d'accueil de Musée IA](apercu/1.png)
+# Musée IA - "Tell me what you see in this painting"
 
-## Lancer le projet (Windows, Python 3.10+)
+**English** · [Français](README.fr.md)
+
+Upload a photo of a painting: a Cohere vision model explains its movement, technique and context, then the app finds
+similar works in a small public-domain corpus (embeddings, then rerank) and justifies each match with **citations**
+restricted to the corpus metadata.
+
+## Run it (Windows, Python 3.10+)
 
 ```powershell
 pip install -r requirements.txt
-copy .env.example .env          # puis renseigner COHERE_API_KEY
-python -m app.cohere_svc       # vérifie que la clé fonctionne (~5 tokens)
-python -m scripts.build_corpus  # construit le corpus (~230 peintures) + embeddings, reprenable
+copy .env.example .env          # then fill in COHERE_API_KEY
+python -m app.cohere_svc       # checks that the key works (~5 tokens)
+python -m scripts.build_corpus  # builds the corpus (~230 paintings) + embeddings, resumable
 python -m app                  # http://127.0.0.1:8000
 ```
 
-Optionnel :
+Optional:
 
 ```powershell
-python -m scripts.neighbors mon_tableau.jpg   # test isolé : 5 plus proches voisins + scores
-python -m scripts.eval                        # precision@5 : embeddings seuls vs embeddings + rerank
+python -m scripts.neighbors my_painting.jpg   # isolated test: 5 nearest neighbours + scores
+python -m scripts.eval                        # precision@5: embeddings only vs embeddings + rerank
+python -m scripts.eval --seeds 0,1,2          # same, over 3 different samples (mean ± std)
+pip install -r requirements-dev.txt && python -m pytest   # tests (no Cohere calls, temporary database)
 ```
 
-`build_corpus` est idempotent : après un quota 429 ou un Ctrl-C, relancez-le, il ne traite que ce qui manque.
-`--scale 0.2` construit un mini corpus de test.
+`build_corpus` is idempotent: after a 429 quota error or a Ctrl-C, run it again and it only processes what is missing.
+`--scale 0.2` builds a small test corpus.
+
+> Cohere's free Trial key is non-commercial and rate-limited, so the project is meant to be run locally with your own
+> key and is deliberately not deployed publicly.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    U[Navigateur<br/>HTML/Jinja2 + JS] -->|POST /api/analyze| V[Command A Vision<br/>JSON structuré]
+    U[Browser<br/>HTML/Jinja2 + JS] -->|POST /api/analyze| V[Command A Vision<br/>structured JSON]
     V --> H[(SQLite<br/>history)]
-    U -->|POST /api/similar| E[Embed v4<br/>image → vecteur]
-    E --> S[numpy<br/>cosinus top 20]
+    U -->|POST /api/similar| E[Embed v4<br/>image → vector]
+    E --> S[numpy<br/>cosine top 20]
     C[(SQLite artworks<br/>embeddings)] --> S
-    S --> R[Rerank v4<br/>requête = description vision]
-    R --> G[Command A + documents<br/>explication + citations]
+    S --> R[Rerank v4<br/>query = vision description]
+    R --> G[Command A + documents<br/>explanation + citations]
     G --> H
     B[build_corpus.py] --> C
     AIC[Art Institute of Chicago] --> B
     WD[Wikidata + Commons] --> B
 ```
 
-Deux requêtes : l'analyse s'affiche dès qu'elle est prête, puis arrivent les œuvres proches. Si le rerank ou le
-grounding échoue, l'application dégrade proprement (ordre des embeddings, pas d'explication citée) et affiche un
-message clair.
+Two requests: the analysis is displayed as soon as it is ready, then the similar works arrive. If rerank or grounding
+fails, the app degrades gracefully (embedding order, no cited explanation) and shows a clear message.
 
-| Étape | Modèle Cohere (surchargeable via `COHERE_MODEL_*` dans `.env`) |
+| Step | Cohere model (overridable via `COHERE_MODEL_*` in `.env`) |
 |---|---|
-| Analyse du tableau | `command-a-vision-07-2025` (chat v2, sortie JSON schema) |
-| Embeddings image | `embed-v4.0` |
-| Re-classement | `rerank-v4.0-pro` |
-| Explication groundée | `command-a-03-2025` (chat v2 avec `documents` → citations) |
+| Painting analysis | `command-a-vision-07-2025` (chat v2, JSON-schema output) |
+| Image embeddings | `embed-v4.0` |
+| Reranking | `rerank-v4.0-pro` |
+| Grounded explanation | `command-a-03-2025` (chat v2 with `documents` → citations) |
 
-SDK `cohere` 7.x (`ClientV2`). Le modèle d'embedding est stocké avec chaque vecteur : changer `COHERE_MODEL_EMBED` puis
-relancer `python -m scripts.build_corpus` ré-embarque tout, sans jamais mélanger deux espaces vectoriels.
+`cohere` SDK 7.x (`ClientV2`). The embedding model is stored with each vector: changing `COHERE_MODEL_EMBED` and
+re-running `python -m scripts.build_corpus` re-embeds everything, never mixing two vector spaces.
 
 ## Corpus
 
-~230 peintures du domaine public, 11 mouvements, source et licence affichées sur chaque carte.
+~230 public-domain paintings, 11 movements, source and licence shown on every card.
 
-* **Art Institute of Chicago** : impressionnisme, post-impressionnisme, réalisme, baroque, néoclassicisme,
-  Renaissance, maniérisme.
-* **Wikidata + Wikimedia Commons** : romantisme, expressionnisme, cubisme, art nouveau (artiste mort avant 1955 et
-  licence Commons vérifiée). Cette source comble les mouvements absents d'AIC une fois filtré sur le domaine public.
+* **Art Institute of Chicago**: impressionism, post-impressionism, realism, baroque, neoclassicism, Renaissance,
+  mannerism.
+* **Wikidata + Wikimedia Commons**: romanticism, expressionism, cubism, art nouveau (artist died before 1955 and
+  Commons licence verified). This source fills the movements missing from AIC once filtered to the public domain.
 
-## Choix techniques
+## Technical choices
 
-* **FastAPI + Jinja2 + JS sans framework** : application légère, pas de build front.
-* **SQLite (`sqlite3`, requêtes paramétrées, sans ORM)** : `artworks`, `history`, `settings`. L'historique ne garde que
-  les métadonnées et le résultat, jamais l'image.
-* **Recherche vectorielle en numpy** : 230 vecteurs ≈ 1,5 Mo, une base vectorielle n'apporterait que de la complexité
-  (pgvector/Qdrant se justifient vers 10⁵ vecteurs).
-* **Analyse structurée** (JSON schema), avec repli « JSON libre + extraction ». Le champ `is_painting` gère les
-  photos non pertinentes ; artiste et mouvement portent un niveau de confiance, « inconnu » est une réponse valide.
-* **Grounding en appel séparé** : `response_format` n'est pas compatible avec `documents`. L'explication ne peut citer
-  que les métadonnées fournies.
-* **Rerank sur texte** : documents = métadonnées des œuvres, requête = description visuelle du modèle vision. C'est
-  une passerelle texte ↔ métadonnées, pas un correcteur de similarité visuelle.
-* **Image traitée en mémoire** (Pillow : validation, redimensionnement), jamais écrite sur disque.
-* **Proxy d'images `/art/{id}`** : l'URL est lue en base (pas d'URL client, donc pas de SSRF) et l'image est mise en
-  cache ; la CSP reste `img-src 'self'`.
+* **FastAPI + Jinja2 + vanilla JS**: lightweight, no front-end build.
+* **SQLite (`sqlite3`, parameterised queries, no ORM)**: `artworks`, `history`, `settings`. History keeps only
+  metadata and the result, never the image.
+* **Vector search in numpy**: 230 vectors ≈ 1.5 MB; a vector database would only add complexity (pgvector/Qdrant make
+  sense around 10⁵ vectors).
+* **Structured analysis** (JSON schema), with a "free JSON + extraction" fallback. The `is_painting` field handles
+  irrelevant photos; artist and movement carry a confidence level, "unknown" is a valid answer.
+* **Grounding in a separate call**: `response_format` is not compatible with `documents`. The explanation can only
+  cite the metadata it is given.
+* **Rerank on text**: documents = artwork metadata, query = the vision model's visual description. It bridges text and
+  metadata; it is not a visual-similarity corrector.
+* **Images handled in memory** (Pillow: validation, resizing), never written to disk.
+* **Image proxy `/art/{id}`**: the URL is read from the database (no client-supplied URL, hence no SSRF) and the image
+  is cached; the CSP stays `img-src 'self'`.
 
-## Sécurité
+## Security
 
-Clé dans `.env` (ignoré par git) et jamais exposée au front · CSP stricte, `nosniff`, `no-referrer` · aucun
-`innerHTML` côté JS, métadonnées externes traitées comme non fiables · upload limité à 5 Mo, type vérifié sur le
-contenu réel · timeouts et backoff sur 429/5xx · erreurs lisibles, jamais de stacktrace.
+Key in `.env` (git-ignored) and never exposed to the front end · strict CSP, `nosniff`, `no-referrer` · no `innerHTML`
+in the JS, external metadata treated as untrusted · uploads capped at 5 MB, type checked on the real content ·
+timeouts and backoff on 429/5xx · readable errors, never a stack trace.
 
-## Évaluation
+## Evaluation
 
-Leave-one-out sur le corpus (232 œuvres) : precision@5 sur le **même mouvement** (`python -m scripts.eval`, résultats dans
-`data/eval_results.json`, une seule exécution le 2026-10-05).
+Leave-one-out over the corpus (232 works): precision@5 on the **same movement** (`python -m scripts.eval`, results in
+`data/eval_results.json`). Rerank is evaluated on a stratified sample of 61 works (API calls count against quota), so
+the "embeddings only" line is **recomputed on those same 61 works**, the only valid comparison.
 
-| Méthode | precision@5 | hors même artiste |
-|---|---|---|
-| Hasard | 0,099 | 0,099 |
-| Embeddings seuls | 0,491 | 0,405 |
-| Embeddings + rerank, documents sans mouvement (échantillon de 61) | 0,433 | 0,393 |
-| Embeddings + rerank, avec mouvement - utilisé par l'app (échantillon de 61) | 0,515 | 0,459 |
+| Method | precision@5 | excluding same artist | n |
+|---|---|---|---|
+| Random | 0.099 | 0.099 | 232 |
+| Embeddings only, full corpus | 0.491 | 0.405 | 232 |
+| Embeddings only, **same 61 works as the rerank** | 0.423 | 0.344 | 61 |
+| Embeddings + rerank, **blind** (documents without the movement) | 0.433 | 0.393 | 61 |
+| Embeddings + rerank, movement in the documents (circular, see below) | 0.515 | 0.459 | 61 |
 
-Les embeddings captent bien le style (≈ 5× le hasard). Le gain du rerank vient surtout du mouvement écrit dans les
-documents, pas d'une meilleure « vision ».
+What this does and does not show:
 
-## Limites
+* Embeddings capture style well: ≈ 5× random on the full corpus.
+* **The "movement in the documents" gain is partly circular**: the documents contain the movement and we evaluate on
+  the movement. It is the app's configuration, but it is not a measure of visual quality.
+* The honest measure is the **blind** variant: +0.010 without artist exclusion, +0.049 with it. With 61 queries
+  (standard error around 0.04), **this gain is inconclusive** (no paired test was run). Rerank mainly serves as a
+  text ↔ metadata bridge (justification, citations), not as a visual-similarity corrector.
+* **Single run** (seed 0, 2026-10-05). The gap between the sample (0.423) and the full corpus (0.491) for the very same
+  embeddings shows the effect of sampling. `python -m scripts.eval --seeds 0,1,2` repeats the rerank on three
+  different samples and reports mean ± std; the numbers above do not come from it.
 
-* Étiquettes de mouvement issues des sources (bruitées), pas d'un historien de l'art.
-* Corpus petit et déséquilibré (5 œuvres en maniérisme, 30 en impressionnisme).
-* Embedding sensible au cadrage des photos (reflets, cadre, angle).
-* L'identification d'artiste est une estimation.
+## Limitations
 
-## Arborescence
+* Movement labels come from the sources (noisy), not from an art historian.
+* Small, unbalanced corpus (5 works in mannerism, 30 in impressionism).
+* Embeddings are sensitive to photo framing (glare, frame, angle).
+* Artist identification is an estimate.
+
+## Layout
 
 ```
-app/                    le serveur et ses services
-  main.py               FastAPI : routes, erreurs, CSP, proxy d'images
+app/                    the server and its services
+  main.py               FastAPI: routes, errors, CSP, image proxy
   cohere_svc.py         vision · embeddings · rerank · grounding
-  search.py             cosinus numpy + PCA 2D
+  search.py             numpy cosine + 2D PCA
   db.py · config.py · i18n.py · imaging.py
-  templates/ static/    interface (Jinja2, CSS, JS)
-scripts/                outils en ligne de commande
+  templates/ static/    UI (Jinja2, CSS, JS)
+scripts/                command-line tools
   build_corpus.py       AIC + Wikidata/Commons → artworks → embeddings
-  neighbors.py          test isolé : image → 5 voisins
-  eval.py               precision@5 : embeddings vs rerank
-data/                   musee.db et caches (non versionnés), résultats d'évaluation
+  neighbors.py          isolated test: image → 5 neighbours
+  eval.py               precision@5: embeddings vs rerank
+tests/                  pytest: cosine, database access, upload validation
+data/                   musee.db and caches (not versioned), evaluation results
 ```
-
-## Aperçu
-
-**Analyse du tableau** : mouvement, période, technique et artiste probable, chacun avec un niveau de confiance.
-
-![Analyse du tableau par le modèle vision](apercu/2.png)
-
-**Œuvres proches** : scores d'embedding (cosinus) et de rerank pour chaque œuvre du corpus.
-
-![Œuvres proches du corpus](apercu/3.png)
-
-**Salle des mouvements** : projection 2D (PCA) du corpus, colorée par mouvement.
-
-![Carte du corpus par mouvement](apercu/4.png)
-
-Survol d'un point : titre, artiste, année et mouvement de l'œuvre.
-
-![Détail d'une œuvre au survol de la carte](apercu/5.png)
