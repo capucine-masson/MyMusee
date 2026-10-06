@@ -1,5 +1,5 @@
 """Messages côté serveur (erreurs, libellés envoyés au modèle). L'UI a son propre dictionnaire JS."""
-from config import DEFAULT_LANG, LANGS
+from .config import DEFAULT_LANG, LANGS
 
 MESSAGES = {
     "fr": {
@@ -14,7 +14,7 @@ MESSAGES = {
         "not_an_image": "Ce fichier n'est pas une image valide.",
         "not_painting": "Cette image ne semble pas être un tableau (photo, capture d'écran, document…). Essayez avec la photo d'une peinture.",
         "bad_model_output": "Le modèle a renvoyé une réponse inexploitable. Réessayez.",
-        "corpus_empty": "Le corpus est vide. Lancez d'abord : python build_corpus.py",
+        "corpus_empty": "Le corpus est vide. Lancez d'abord : python -m scripts.build_corpus",
         "not_found": "Élément introuvable.",
         "bad_request": "Requête invalide.",
         "internal": "Une erreur inattendue s'est produite. Réessayez.",
@@ -32,7 +32,7 @@ MESSAGES = {
         "not_an_image": "This file is not a valid image.",
         "not_painting": "This image does not look like a painting (photo, screenshot, document…). Try a photo of a painting.",
         "bad_model_output": "The model returned an unusable answer. Please try again.",
-        "corpus_empty": "The corpus is empty. First run: python build_corpus.py",
+        "corpus_empty": "The corpus is empty. First run: python -m scripts.build_corpus",
         "not_found": "Not found.",
         "bad_request": "Invalid request.",
         "internal": "An unexpected error occurred. Please try again.",

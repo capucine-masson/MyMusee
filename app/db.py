@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from config import DB_PATH, DEFAULT_LANG, DEFAULT_LEVEL, LANGS, LEVELS
+from .config import DB_PATH, DEFAULT_LANG, DEFAULT_LEVEL, LANGS, LEVELS
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS artworks (

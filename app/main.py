@@ -1,4 +1,4 @@
-"""Musée IA : « Dis-moi ce que tu vois dans ce tableau ». Lancement : python main.py"""
+"""Musée IA : « Dis-moi ce que tu vois dans ce tableau ». Lancement : python -m app"""
 import logging
 import re
 import time
@@ -12,15 +12,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-import cohere_svc
-import config
-import db
-import imaging
-import search
-from i18n import AppError, norm_lang, t
+from . import cohere_svc
+from . import config
+from . import db
+from . import imaging
+from . import search
+from .i18n import AppError, norm_lang, t
 
 log = logging.getLogger("musee")
-templates = Jinja2Templates(directory=str(config.BASE_DIR / "templates"))
+templates = Jinja2Templates(directory=str(config.APP_DIR / "templates"))
 
 
 @asynccontextmanager
@@ -30,7 +30,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Musée IA", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
-app.mount("/static", StaticFiles(directory=str(config.BASE_DIR / "static")), name="static")
+app.mount("/static", StaticFiles(directory=str(config.APP_DIR / "static")), name="static")
 
 CSP = (
     "default-src 'self'; "
@@ -318,7 +318,3 @@ def api_similar(
     db.update_history(history_id, result)
     return {"history_id": history_id, **result}
 
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    uvicorn.run(app, host=config.HOST, port=config.PORT)

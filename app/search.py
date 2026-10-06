@@ -3,8 +3,8 @@ import threading
 
 import numpy as np
 
-import config
-import db
+from . import config
+from . import db
 
 _lock = threading.Lock()
 _cache: dict = {"metas": None, "mat": None}

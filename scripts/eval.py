@@ -18,10 +18,10 @@ La requête du rerank est la description produite par Command A Vision à partir
 Option --query-mode meta : requête construite sans appel vision à partir du titre/médium (plus faible, gratuit).
 
 Usage
-  python eval.py                        # embeddings (corpus entier) + rerank sur ~60 œuvres
-  python eval.py --sample 100
-  python eval.py --no-rerank            # embeddings seuls, zéro appel API
-  python eval.py --query-mode meta
+  python -m scripts.eval                        # embeddings (corpus entier) + rerank sur ~60 œuvres
+  python -m scripts.eval --sample 100
+  python -m scripts.eval --no-rerank            # embeddings seuls, zéro appel API
+  python -m scripts.eval --query-mode meta
 """
 import argparse
 import json
@@ -33,11 +33,11 @@ from collections import defaultdict
 
 import numpy as np
 
-import build_corpus
-import cohere_svc
-import config
-import search
-from i18n import AppError
+from scripts import build_corpus
+from app import cohere_svc
+from app import config
+from app import search
+from app.i18n import AppError
 
 K = 5
 CANDIDATES = config.CANDIDATES_K
@@ -138,7 +138,7 @@ def main() -> None:
     metas, mat = search.load_index(force=True)
     n = len(metas)
     if n < 20:
-        raise SystemExit("Corpus trop petit ou non vectorisé : lancez d'abord python build_corpus.py")
+        raise SystemExit("Corpus trop petit ou non vectorisé : lancez d'abord python -m scripts.build_corpus")
     counts = defaultdict(int)
     for m in metas:
         counts[m["movement"]] += 1

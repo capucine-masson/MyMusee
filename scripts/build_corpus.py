@@ -12,10 +12,10 @@ Le script est IDEMPOTENT et REPRENABLE :
     avec sauvegarde après chaque lot : un Ctrl-C ou un quota 429 ne fait rien perdre.
 
 Usage
-  python build_corpus.py                 # tout (métadonnées + embeddings)
-  python build_corpus.py --scale 0.2     # mini corpus de test (~50 œuvres)
-  python build_corpus.py --skip-embed    # métadonnées seulement
-  python build_corpus.py --skip-fetch    # embarque seulement ce qui manque
+  python -m scripts.build_corpus                 # tout (métadonnées + embeddings)
+  python -m scripts.build_corpus --scale 0.2     # mini corpus de test (~50 œuvres)
+  python -m scripts.build_corpus --skip-embed    # métadonnées seulement
+  python -m scripts.build_corpus --skip-fetch    # embarque seulement ce qui manque
 """
 import argparse
 import re
@@ -26,11 +26,11 @@ from urllib.parse import quote, unquote, urlparse
 
 import httpx
 
-import cohere_svc
-import config
-import db
-import imaging
-from i18n import AppError
+from app import cohere_svc
+from app import config
+from app import db
+from app import imaging
+from app.i18n import AppError
 
 AIC_SEARCH = "https://api.artic.edu/api/v1/artworks/search"
 WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"

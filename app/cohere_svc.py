@@ -12,8 +12,8 @@ import cohere
 import httpx
 import numpy as np
 
-import config
-from i18n import LANG_NAMES, LEVEL_GUIDE, AppError
+from . import config
+from .i18n import LANG_NAMES, LEVEL_GUIDE, AppError
 
 _client: cohere.ClientV2 | None = None
 
@@ -406,7 +406,7 @@ def _segments(text: str, citations: list[dict]) -> list[dict]:
 
 
 if __name__ == "__main__":
-    # `python cohere_svc.py` : vérifie que la clé fonctionne
+    # `python -m app.cohere_svc` : vérifie que la clé fonctionne
     try:
         print(ping())
     except AppError as e:

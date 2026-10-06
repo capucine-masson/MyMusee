@@ -12,7 +12,8 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # racine du projet
+APP_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env", encoding="utf-8")
 
 COHERE_API_KEY = os.getenv("COHERE_API_KEY", "").strip()
@@ -34,7 +35,7 @@ VISION_MAX_SIDE = 1536
 CANDIDATES_K = 20  # top-k avant rerank
 FINAL_K = 5  # résultats affichés
 
-DB_PATH = BASE_DIR / "musee.db"
+DB_PATH = BASE_DIR / "data" / "musee.db"
 ART_CACHE_DIR = BASE_DIR / "data" / "cache" / "art"  # images du corpus (domaine public) servies par /art/{id}
 MAX_ART_BYTES = 8 * 1024 * 1024
 USER_AGENT = "MuseeIA-demo/0.1 (projet portfolio; contact: masson.capucine@gmail.com)"

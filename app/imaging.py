@@ -4,8 +4,8 @@ import io
 
 from PIL import Image, UnidentifiedImageError
 
-from config import ALLOWED_MIME, EMBED_IMAGE_WIDTH, MAX_UPLOAD_BYTES, VISION_MAX_SIDE
-from i18n import AppError
+from .config import ALLOWED_MIME, EMBED_IMAGE_WIDTH, MAX_UPLOAD_BYTES, VISION_MAX_SIDE
+from .i18n import AppError
 
 Image.MAX_IMAGE_PIXELS = 60_000_000  # protège contre les « decompression bombs »
 
