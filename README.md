@@ -4,6 +4,8 @@ Envoyez la photo d'un tableau : un modèle vision de Cohere en explique le mouve
 l'application propose des œuvres proches d'un petit corpus du domaine public (embeddings, puis rerank) et justifie
 chaque rapprochement par des **citations** limitées aux métadonnées du corpus.
 
+![Page d'accueil de Musée IA](apercu/1.png)
+
 ## Lancer le projet (Windows, Python 3.10+)
 
 ```powershell
@@ -124,3 +126,21 @@ scripts/                outils en ligne de commande
   eval.py               precision@5 : embeddings vs rerank
 data/                   musee.db et caches (non versionnés), résultats d'évaluation
 ```
+
+## Aperçu
+
+**Analyse du tableau** : mouvement, période, technique et artiste probable, chacun avec un niveau de confiance.
+
+![Analyse du tableau par le modèle vision](apercu/2.png)
+
+**Œuvres proches** : scores d'embedding (cosinus) et de rerank pour chaque œuvre du corpus.
+
+![Œuvres proches du corpus](apercu/3.png)
+
+**Salle des mouvements** : projection 2D (PCA) du corpus, colorée par mouvement.
+
+![Carte du corpus par mouvement](apercu/4.png)
+
+Survol d'un point : titre, artiste, année et mouvement de l'œuvre.
+
+![Détail d'une œuvre au survol de la carte](apercu/5.png)
