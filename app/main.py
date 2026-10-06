@@ -49,6 +49,8 @@ async def security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     if request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
+    elif request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"  # revalide à chaque chargement (ETag) : pas de CSS/JS périmé
     return response
 
 
