@@ -7,7 +7,10 @@ embeddings, puis rerank) et justifie chaque rapprochement avec des **citations**
 Projet de démonstration pour un poste de *Forward Deployed Engineer* : il assemble vision/chat, embeddings, rerank et
 grounding avec citations, et documente évaluation, limites et choix.
 
-Interface bilingue FR / EN (drapeaux en haut à droite) · thèmes : salle de musée la nuit.
+Interface bilingue FR / EN (drapeaux en haut à droite). Direction artistique : affiche de musée en sérigraphie
+(aplats, ombres décalées). Palette `#231F20` charbon · `#BB4430` rouille · `#7EBDC2` turquoise · `#F3DFA2` crème ;
+polices Archivo Black (titres), Atkinson Hyperlegible (corps), Architects Daughter (notes). Seules les couleurs
+des points de la carte `/salle` sortent de la palette : 11 catégories ne tiennent pas en 4 couleurs.
 
 ---
 
@@ -148,13 +151,35 @@ des 5 premiers qui ont le **même mouvement** (precision@5). Comparaison : embed
   mouvement », parce que ces métadonnées sont de l'information légitime à montrer à l'utilisateur.
 
 La requête de rerank est la description produite par Command A Vision à partir de l'image de chaque œuvre, comme
-dans l'application (le rerank est évalué sur un échantillon stratifié de 60 œuvres pour rester dans les quotas d'une
+dans l'application (le rerank est évalué sur un échantillon stratifié d'environ 60 œuvres (61 en pratique, arrondis par mouvement) pour rester dans les quotas d'une
 clé gratuite ; les descriptions sont mises en cache).
 
 ### Résultats
 
-> **À remplir après la première exécution avec une vraie clé** : `python eval.py` écrit
-> `data/eval_results.json` et affiche le tableau. Aucun chiffre n'est inscrit ici tant qu'il n'a pas été mesuré.
+Mesurés le 2026-10-05 avec `embed-v4.0` et `rerank-v4.0-pro`, corpus de 232 œuvres / 11 mouvements, échantillon
+stratifié de 61 œuvres pour le rerank (`data/eval_results.json`). Une seule exécution, pas de répétition.
+
+| Méthode | precision@5 | hors même artiste | n |
+|---|---|---|---|
+| Hasard | 0,099 | 0,099 | 232 |
+| Embeddings seuls (corpus entier) | **0,491** | **0,405** | 232 |
+| Embeddings seuls (échantillon) | 0,423 | 0,344 | 61 |
+| Embeddings + rerank, **aveugle** (documents sans mouvement) | 0,433 | 0,393 | 61 |
+| Embeddings + rerank, **avec mouvement** (application) | 0,515 | 0,459 | 61 |
+
+Lecture honnête :
+
+* Les embeddings seuls font **environ 5× le hasard** : l'espace d'embedding capte bien le style. Le cubisme ressort
+  très bien (0,84), le réalisme et le maniérisme mal (0,20 et 0,24), ce qui reflète aussi le bruit des étiquettes.
+* Retirer les œuvres du même artiste coûte ~0,09 point : une partie du score vient de « même peintre ».
+* Le **rerank aveugle n'apporte presque rien** (+0,01 / +0,05) : sur 61 requêtes, l'erreur-type est d'environ 0,04,
+  donc ce n'est pas distinguable du bruit. Il dégrade même certains mouvements (post-impressionnisme 0,13).
+* Le **rerank avec mouvement gagne +0,09 / +0,11**, mais en grande partie parce que le mouvement est écrit dans les
+  documents et que la description vision emploie des mots de style : c'est de l'information réelle à montrer à
+  l'utilisateur, mais ce n'est pas la preuve que le rerank « voit » mieux les œuvres.
+* Conclusion pratique : le rerank vaut surtout comme **passerelle texte ↔ métadonnées** (relier ce que décrit le
+  modèle vision aux étiquettes du corpus), pas comme correcteur de similarité visuelle. Pour progresser : de
+  meilleures étiquettes, un corpus plus grand, et un échantillon plus large pour trancher.
 
 ## Limites connues
 

@@ -1,0 +1,134 @@
+{
+  "n": 232,
+  "movements": {
+    "Mannerism": 5,
+    "Baroque": 19,
+    "Impressionism": 30,
+    "Post-Impressionism": 23,
+    "Renaissance": 24,
+    "Realism": 20,
+    "Neoclassicism": 11,
+    "Romanticism": 30,
+    "Cubism": 25,
+    "Expressionism": 30,
+    "Art Nouveau": 15
+  },
+  "k": 5,
+  "random_baseline": 0.09945514255859104,
+  "embed_model": "embed-v4.0",
+  "rerank_model": "rerank-v4.0-pro",
+  "query_mode": "vision",
+  "embeddings_full": {
+    "precision": 0.49051724137931046,
+    "precision_cross_artist": 0.40517241379310365
+  },
+  "rerank_sample": {
+    "emb": 0.4229508196721311,
+    "rr_blind": 0.43278688524590175,
+    "rr_lab": 0.5147540983606557,
+    "emb_x": 0.3442622950819671,
+    "rr_blind_x": 0.3934426229508197,
+    "rr_lab_x": 0.4590163934426229,
+    "n": 61
+  },
+  "table": [
+    {
+      "method": "Aléatoire",
+      "precision": 0.09945514255859104,
+      "precision_cross_artist": 0.09945514255859104,
+      "n": 232
+    },
+    {
+      "method": "Embeddings seuls (corpus entier)",
+      "precision": 0.49051724137931046,
+      "precision_cross_artist": 0.40517241379310365,
+      "n": 232
+    },
+    {
+      "method": "Embeddings seuls (échantillon de 61)",
+      "precision": 0.4229508196721311,
+      "precision_cross_artist": 0.3442622950819671,
+      "n": 61
+    },
+    {
+      "method": "Embeddings + rerank, aveugle (sans mouvement)",
+      "precision": 0.43278688524590175,
+      "precision_cross_artist": 0.3934426229508197,
+      "n": 61
+    },
+    {
+      "method": "Embeddings + rerank, avec mouvement (application)",
+      "precision": 0.5147540983606557,
+      "precision_cross_artist": 0.4590163934426229,
+      "n": 61
+    }
+  ],
+  "per_movement": {
+    "Mannerism": {
+      "emb": 0.24,
+      "emb_x": 0.24,
+      "rr_blind": 0.2,
+      "rr_lab": 0.2
+    },
+    "Baroque": {
+      "emb": 0.5052631578947369,
+      "emb_x": 0.3684210526315789,
+      "rr_blind": 0.5599999999999999,
+      "rr_lab": 0.64
+    },
+    "Impressionism": {
+      "emb": 0.37333333333333324,
+      "emb_x": 0.36666666666666664,
+      "rr_blind": 0.375,
+      "rr_lab": 0.525
+    },
+    "Post-Impressionism": {
+      "emb": 0.38260869565217387,
+      "emb_x": 0.24347826086956523,
+      "rr_blind": 0.13333333333333333,
+      "rr_lab": 0.26666666666666666
+    },
+    "Renaissance": {
+      "emb": 0.55,
+      "emb_x": 0.55,
+      "rr_blind": 0.26666666666666666,
+      "rr_lab": 0.3666666666666667
+    },
+    "Realism": {
+      "emb": 0.20000000000000004,
+      "emb_x": 0.17,
+      "rr_blind": 0.31999999999999995,
+      "rr_lab": 0.4000000000000001
+    },
+    "Neoclassicism": {
+      "emb": 0.43636363636363645,
+      "emb_x": 0.21818181818181817,
+      "rr_blind": 0.46666666666666673,
+      "rr_lab": 0.6
+    },
+    "Romanticism": {
+      "emb": 0.5933333333333334,
+      "emb_x": 0.4866666666666666,
+      "rr_blind": 0.4,
+      "rr_lab": 0.5
+    },
+    "Cubism": {
+      "emb": 0.8400000000000002,
+      "emb_x": 0.8000000000000002,
+      "rr_blind": 0.9333333333333332,
+      "rr_lab": 1.0
+    },
+    "Expressionism": {
+      "emb": 0.52,
+      "emb_x": 0.3733333333333334,
+      "rr_blind": 0.45,
+      "rr_lab": 0.47500000000000003
+    },
+    "Art Nouveau": {
+      "emb": 0.44,
+      "emb_x": 0.29333333333333333,
+      "rr_blind": 0.6,
+      "rr_lab": 0.55
+    }
+  }
+}

@@ -18,7 +18,7 @@ La requête du rerank est la description produite par Command A Vision à partir
 Option --query-mode meta : requête construite sans appel vision à partir du titre/médium (plus faible, gratuit).
 
 Usage
-  python eval.py                        # embeddings (corpus entier) + rerank sur 60 œuvres
+  python eval.py                        # embeddings (corpus entier) + rerank sur ~60 œuvres
   python eval.py --sample 100
   python eval.py --no-rerank            # embeddings seuls, zéro appel API
   python eval.py --query-mode meta
