@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block main %}
+<main class="wrap">
+  <section class="hero reveal">
+    <p class="kicker" data-i18n="hero.kicker">Visite nocturne</p>
+    <h1 data-i18n="hero.title">Dis-moi ce que tu vois dans ce tableau</h1>
+    <p class="lede" data-i18n="hero.sub">Envoie la photo d'un tableau : analyse, œuvres proches et explications sourcées.</p>
+  </section>
+
+  <div id="banner" class="banner" role="status" hidden></div>
+
+  <form id="upload-form" class="upload reveal" data-i="1" novalidate>
+    <div class="frame frame-lg">
+      <div class="mat">
+        <input id="file" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only">
+        <label id="dropzone" class="dropzone" for="file" tabindex="0">
+          <div id="drop-empty" class="drop-empty">
+            <svg class="drop-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="9" width="34" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 33l9-10 7 7 5-5 9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="18" r="3" fill="currentColor"/></svg>
+            <p class="drop-title" data-i18n="drop.title">Glisse un tableau ici</p>
+            <p class="drop-or" data-i18n="drop.or">ou clique pour choisir un fichier</p>
+            <p class="note hint" data-i18n="drop.hint">JPEG, PNG ou WebP · 5 Mo max</p>
+          </div>
+          <figure id="drop-preview" class="drop-preview" hidden>
+            <img id="preview-img" alt="">
+            <figcaption class="cartel note"><span id="preview-name"></span> · <span id="preview-size"></span> · <span class="link-like" data-i18n="drop.change">Changer d'image</span></figcaption>
+          </figure>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls">
+      <fieldset class="levels">
+        <legend class="note" data-i18n="level.label">Niveau d'explication</legend>
+        <div class="seg">
+          <label><input type="radio" name="level" value="beginner"><span data-i18n="level.beginner">Débutant</span></label>
+          <label><input type="radio" name="level" value="enthusiast"><span data-i18n="level.enthusiast">Passionné</span></label>
+          <label><input type="radio" name="level" value="expert"><span data-i18n="level.expert">Expert</span></label>
+        </div>
+      </fieldset>
+      <button id="submit" class="btn" type="submit" disabled>
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="submit-label" data-i18n="btn.analyze">Analyser le tableau</span>
+      </button>
+    </div>
+    <p id="stage" class="stage note" role="status" aria-live="polite" hidden></p>
+    <div id="error" class="error" role="alert" hidden>
+      <p id="error-msg"></p>
+      <p id="error-detail" class="note"></p>
+    </div>
+  </form>
+
+  <section id="results" class="results" hidden aria-live="polite">
+    <article id="analysis" class="panel" hidden>
+      <h2 data-i18n="analysis.title">Ce que je vois</h2>
+      <div class="analysis-grid">
+        <div class="frame">
+          <div class="mat">
+            <img id="analysis-img" alt="" hidden>
+            <p id="analysis-noimg" class="noimg note" hidden data-i18n="history.noimage">Image non conservée (traitée en mémoire uniquement)</p>
+          </div>
+        </div>
+        <div class="cartel-block">
+          <dl class="cartel note" id="cartel"></dl>
+          <ul class="chips" id="elements"></ul>
+        </div>
+      </div>
+      <p id="explanation" class="prose"></p>
+    </article>
+
+    <article id="similar" class="panel" hidden>
+      <h2 data-i18n="similar.title">Œuvres proches</h2>
+      <p class="sub" data-i18n="similar.sub">Trouvées dans le corpus du domaine public par similarité d'embeddings, puis re-classées.</p>
+      <ol class="gallery" id="gallery"></ol>
+
+      <details class="beforeafter" id="beforeafter">
+        <summary data-i18n="ba.title">Avant / après rerank</summary>
+        <div class="ba-grid">
+          <div><h3 class="note" data-i18n="ba.before">Embeddings seuls</h3><ol id="ba-before"></ol></div>
+          <div><h3 class="note" data-i18n="ba.after">Après rerank</h3><ol id="ba-after"></ol></div>
+        </div>
+        <p id="ba-note" class="note hint"></p>
+      </details>
+    </article>
+
+    <article id="grounding" class="panel" hidden>
+      <h2 data-i18n="ground.title">Pourquoi ces œuvres se ressemblent</h2>
+      <p class="sub" data-i18n="ground.note">Explication limitée aux métadonnées du corpus. Les passages soulignés sont des citations renvoyées par l'API.</p>
+      <p id="ground-text" class="prose"></p>
+      <ul id="ground-sources" class="sources note"></ul>
+    </article>
+
+    <article id="timings" class="panel panel-quiet" hidden>
+      <h2 class="note" data-i18n="timing.title">Pipeline</h2>
+      <ul id="timing-list" class="timings note"></ul>
+    </article>
+  </section>
+
+  <section class="panel history reveal" data-i="2">
+    <div class="history-head">
+      <h2 data-i18n="history.title">Dernières analyses</h2>
+      <button id="history-clear" class="link-btn note" type="button" data-i18n="history.clear">Effacer l'historique</button>
+    </div>
+    <ul id="history-list" class="history-list"></ul>
+    <p id="history-empty" class="note hint" data-i18n="history.empty" hidden>Aucune analyse pour l'instant.</p>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

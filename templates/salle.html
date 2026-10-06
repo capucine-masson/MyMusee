@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block main %}
+<main class="wrap wrap-wide">
+  <section class="hero reveal">
+    <p class="kicker" data-i18n="salle.kicker">Salle des mouvements</p>
+    <h1 data-i18n="salle.title">Le corpus, par mouvement</h1>
+    <p class="lede" data-i18n="salle.sub">Projection 2D (PCA) des embeddings : les œuvres proches se regroupent.</p>
+  </section>
+
+  <div id="salle-empty" class="banner" hidden data-i18n="salle.empty">Le corpus est vide. Lancez d'abord : python build_corpus.py</div>
+
+  <section id="salle-body" class="salle reveal" data-i="1" hidden>
+    <div class="map-wrap">
+    <div class="map-card frame">
+      <div class="mat mat-dark">
+        <svg id="map" viewBox="0 0 760 520" role="img" aria-labelledby="map-title map-desc" preserveAspectRatio="xMidYMid meet">
+          <title id="map-title" data-i18n="salle.maptitle">Carte des œuvres du corpus (PCA des embeddings)</title>
+          <desc id="map-desc" data-i18n="salle.mapdesc">Chaque point est une peinture, coloré par mouvement.</desc>
+        </svg>
+        <div id="tip" class="tip" hidden>
+          <img id="tip-img" alt="" width="64" height="64">
+          <div><strong id="tip-title"></strong><span id="tip-artist" class="note"></span><span id="tip-mov" class="note"></span></div>
+        </div>
+      </div>
+    </div>
+    <p id="map-meta" class="note hint"></p>
+    </div>
+
+    <aside class="legend panel panel-quiet">
+      <h2 class="note" data-i18n="salle.legend">Mouvements</h2>
+      <ul id="legend" class="legend-list"></ul>
+      <button id="legend-reset" class="link-btn note" type="button" data-i18n="salle.reset">Tout afficher</button>
+    </aside>
+  </section>
+
+  <section id="by-movement" class="by-movement" hidden>
+    <h2 data-i18n="salle.bymov">Œuvres par mouvement</h2>
+    <div id="movement-groups"></div>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/salle.js"></script>{% endblock %}
