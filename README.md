@@ -1,4 +1,4 @@
-# Musée IA — « Dis-moi ce que tu vois dans ce tableau »
+# Musée IA - « Dis-moi ce que tu vois dans ce tableau »
 
 Envoyez la photo d'un tableau : un modèle vision de Cohere en explique le mouvement, la technique et le contexte, puis
 l'application propose des œuvres proches d'un petit corpus du domaine public (embeddings, puis rerank) et justifie
@@ -99,7 +99,7 @@ Leave-one-out sur le corpus (232 œuvres) : precision@5 sur le **même mouvement
 | Hasard | 0,099 | 0,099 |
 | Embeddings seuls | 0,491 | 0,405 |
 | Embeddings + rerank, documents sans mouvement (échantillon de 61) | 0,433 | 0,393 |
-| Embeddings + rerank, avec mouvement — utilisé par l'app (échantillon de 61) | 0,515 | 0,459 |
+| Embeddings + rerank, avec mouvement - utilisé par l'app (échantillon de 61) | 0,515 | 0,459 |
 
 Les embeddings captent bien le style (≈ 5× le hasard). Le gain du rerank vient surtout du mouvement écrit dans les
 documents, pas d'une meilleure « vision ».
